@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  # Define the base box for the VMs
+  config.vm.box = "ubuntu/jammy64" # Or "ubuntu/bionic64" for an older Ubuntu version
+
+  # Master Node Configuration
+  config.vm.define "k8s-master" do |master|
+    master.vm.hostname = "k8s-master"
+    master.vm.network "private_network", ip: "192.168.56.10"
+    master.vm.provider "virtualbox" do |vb|
+      vb.name = "k8s-master"
+      vb.memory = 4096 # 4GB RAM
+      vb.cpus = 2      # 2 CPU cores
+    end
+    master.vm.provision "shell", path: "scripts/master-provision.sh"
+  end
+
+  # Worker Nodes Configuration
+  (1..2).each do |i|
+    config.vm.define "k8s-worker-#{i}" do |worker|
+      worker.vm.hostname = "k8s-worker-#{i}"
+      worker.vm.network "private_network", ip: "192.168.56.#{10 + i}"
+      worker.vm.provider "virtualbox" do |vb|
+        vb.name = "k8s-worker-#{i}"
+        vb.memory = 2048 # 2GB RAM
+        vb.cpus = 1      # 1 CPU core
+      end
+      worker.vm.provision "shell", path: "scripts/worker-provision.sh"
+    end
+  end
+
+  # Common provisioning script for all nodes (before specific roles)
+  config.vm.provision "shell", path: "scripts/common-provision.sh"
+end
