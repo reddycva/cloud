@@ -40,9 +40,11 @@ sudo containerd config default | sudo tee /etc/containerd/config.toml > /dev/nul
 sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 sudo systemctl restart containerd
 
-# Add Kubernetes apt repository
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive.gpg
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
+# Add Kubernetes apt repository - THIS IS THE CRITICAL CHANGE
+# This method is more robust and dynamically gets the correct Ubuntu distribution name
+# and uses the official Kubernetes repository structure for that distribution.
+sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 sudo apt-get update
 sudo apt-get install -y kubelet kubeadm kubectl
